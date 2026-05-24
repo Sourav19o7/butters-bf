@@ -2,22 +2,34 @@ import cv2
 import requests
 import base64
 import time
-import json
+import datetime
+from feedback import init_db, save_feedback
+from dotenv import load_dotenv
+import os
 
-CAMERA = 1
-MODEL = "moondream"
-OLLAMA_URL="http://localhost:11434/api/chat"
+load_dotenv()
+
+
+
+CAMERA = os.getenv("CAMERA")
+MODEL = os.getenv("MODEL")
+OLLAMA_URL=os.getenv("OLLAMA_URL")
 DELAY=3 #seconds
 PROMPT="You are an expert in canine behavior and body language. Analyze this image of Butter, a Golden Retriever. Carefully observe her eyes (soft/hard, squinting, wide), ears (position: forward/back/relaxed), nose (twitching, sniffing, dry/wet), tail (height, movement, tension), posture (weight distribution, muscle tension, stance), and overall body language. In exactly one confident sentence, describe what Butter is most likely doing at this precise moment and what she wants or needs right now."
 
-def capture_frame():
+def generate_image():
+    time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    pathname = f"data/frames/{time}.jpg"
+    return pathname
+
+def capture_frame(image_path):
     cap = cv2.VideoCapture(CAMERA)
     for i in range(10):
         cap.read()
     
     ret, frame = cap.read()
     if ret:
-        cv2.imwrite("image.jpg",frame)
+        cv2.imwrite(image_path,frame)
     cap.release()
     return frame
 
@@ -53,9 +65,16 @@ def ask_moondream(image_b64, prompt):
         time.sleep(0.05)
     print("")
 
+    return ollama_res
+
 if __name__== "__main__":
+
+    #initialising feedback
+    init_db()
+
     while True :
-        frame = capture_frame()
+        image_path = generate_image()
+        frame = capture_frame(image_path)
 
         # In the case where frame is none encode frame crashes
         if frame is None:
@@ -63,8 +82,18 @@ if __name__== "__main__":
 
         image_b64 = encode_frame(frame)
 
-        ask_moondream(
+        guess = ask_moondream(
             image_b64=image_b64,
             prompt=PROMPT
         )
+
+        correction = input("Correct it (or press Enter to skip): ")
+
+        if(correction):
+            save_feedback(
+                image_path=image_path,
+                moondream_guess= guess,
+                correction=correction
+            )
+
         time.sleep(DELAY)

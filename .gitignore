@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+
+# Environment / secrets
+.env
+
+# Local database
+butter.db
+*.db
+
+# Images (face recognition captures / inputs)
+*.jpg
+*.jpeg
+*.png
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
