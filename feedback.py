@@ -35,3 +35,23 @@ def save_feedback(image_path, moondream_guess, correction):
 
     conn.commit()
     conn.close()
+
+
+def get_context_summary():
+    conn = sqlite3.connect(DATABASE_NAME)
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """SELECT moondream_guess, correction FROM feedback
+          WHERE correction != '' ORDER BY timestamp DESC"""
+    )
+
+    context_summary = cursor.fetchall()
+
+    res_string = ""
+    for summary in context_summary:
+        res_string += f"- Butter was actually : {summary[1]}\n"
+
+    conn.close()
+
+    return res_string

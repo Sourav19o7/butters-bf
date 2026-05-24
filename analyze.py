@@ -1,17 +1,17 @@
 import cv2
 import requests
 import base64
+import os
 import time
 import datetime
-from feedback import init_db, save_feedback
+from feedback import init_db, save_feedback, get_context_summary
 from dotenv import load_dotenv
-import os
 
 load_dotenv()
 
 
 
-CAMERA = os.getenv("CAMERA")
+CAMERA = int(os.getenv("CAMERA"))
 MODEL = os.getenv("MODEL")
 OLLAMA_URL=os.getenv("OLLAMA_URL")
 DELAY=3 #seconds
@@ -81,10 +81,12 @@ if __name__== "__main__":
             continue
 
         image_b64 = encode_frame(frame)
+        context = get_context_summary()
+        full_prompt = PROMPT + "\n\nFrom past observation:\n" + context
 
         guess = ask_moondream(
             image_b64=image_b64,
-            prompt=PROMPT
+            prompt=full_prompt
         )
 
         correction = input("Correct it (or press Enter to skip): ")
